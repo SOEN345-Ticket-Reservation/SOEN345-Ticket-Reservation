@@ -50,4 +50,7 @@ public class Event {
     @NotNull(message = "Price is required")
     @Column(nullable = false)
     private BigDecimal price;
+
+    @Version
+    private Long version;
 }
