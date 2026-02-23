@@ -6,25 +6,6 @@ Repository for SOEN345 Ticket Reservation
 classDiagram
     direction TB
 
-    %% ── Enums ──
-    class UserRole {
-        <<enumeration>>
-        CUSTOMER
-        ADMIN
-    }
-    class EventCategory {
-        <<enumeration>>
-        MOVIE
-        CONCERT
-        TRAVEL
-        SPORTS
-    }
-    class ReservationStatus {
-        <<enumeration>>
-        CONFIRMED
-        CANCELLED
-    }
-
     %% ── Entity Models ──
     class User {
         -Long id
@@ -83,61 +64,6 @@ classDiagram
     UserRepository ..> User
     EventRepository ..> Event
     ReservationRepository ..> Reservation
-
-    %% ── Request DTOs ──
-    class RegisterRequest {
-        -String name
-        -String email
-        -String phone
-        -String password
-    }
-    class LoginRequest {
-        -String emailOrPhone
-        -String password
-    }
-    class CreateEventRequest {
-        -String title
-        -String description
-        -LocalDateTime date
-        -String location
-        -EventCategory category
-        -int capacity
-        -BigDecimal price
-    }
-    class ReservationRequest {
-        -Long eventId
-        -int numberOfTickets
-    }
-
-    %% ── Response DTOs ──
-    class UserResponse {
-        -Long id
-        -String name
-        -String email
-        -String phone
-        -UserRole role
-    }
-    class EventResponse {
-        -Long id
-        -String title
-        -String description
-        -LocalDateTime date
-        -String location
-        -EventCategory category
-        -int capacity
-        -BigDecimal price
-        -int availableSeats
-    }
-    class ReservationResponse {
-        -Long id
-        -Long userId
-        -String userName
-        -Long eventId
-        -String eventTitle
-        -ReservationStatus status
-        -LocalDateTime reservedAt
-        -String confirmationCode
-    }
 
     %% ── Services ──
     class UserService {
@@ -220,38 +146,6 @@ classDiagram
     EventController --> EventService
     ReservationController --> ReservationService
     AdminController --> AdminService
-
-    %% ── Exceptions ──
-    class GlobalExceptionHandler {
-        +handleResourceNotFound(ResourceNotFoundException) ResponseEntity
-        +handleEventFull(EventFullException) ResponseEntity
-        +handleDuplicateRegistration(DuplicateRegistrationException) ResponseEntity
-        +handleValidationErrors(MethodArgumentNotValidException) ResponseEntity
-        +handleIllegalArgument(IllegalArgumentException) ResponseEntity
-        +handleGeneral(Exception) ResponseEntity
-    }
-    class ResourceNotFoundException {
-        +ResourceNotFoundException(String)
-    }
-    class EventFullException {
-        +EventFullException(String)
-    }
-    class DuplicateRegistrationException {
-        +DuplicateRegistrationException(String)
-    }
-
-    ResourceNotFoundException --|> RuntimeException
-    EventFullException --|> RuntimeException
-    DuplicateRegistrationException --|> RuntimeException
-
-    %% ── Config ──
-    class SecurityConfig {
-        +securityFilterChain(HttpSecurity) SecurityFilterChain
-        +passwordEncoder() PasswordEncoder
-    }
-    class CorsConfig {
-        +addCorsMappings(CorsRegistry) void
-    }
 ```
 
 ```mermaid
