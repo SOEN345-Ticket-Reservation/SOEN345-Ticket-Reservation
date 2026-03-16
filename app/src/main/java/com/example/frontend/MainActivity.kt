@@ -16,6 +16,7 @@ import com.example.frontend.ui.dashboard.SessionUiState
 import com.example.frontend.ui.dashboard.onAuthSuccess
 import com.example.frontend.ui.dashboard.onSignOut
 import com.example.frontend.ui.theme.FrontendTheme
+import androidx.compose.runtime.saveable.rememberSaveable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
