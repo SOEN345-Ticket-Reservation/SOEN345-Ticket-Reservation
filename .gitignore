@@ -1,1 +1,22 @@
+# macOS
 .DS_Store
+
+# Android / Gradle build outputs
+build/
+.gradle/
+local.properties
+
+# Android Studio project files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Kotlin/Java compiled outputs
+**/*.class
+**/*.jar
+**/*.war
+**/*.aar
+
+# Dependency cache
+.caches/
