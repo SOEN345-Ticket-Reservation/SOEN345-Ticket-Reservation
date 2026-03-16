@@ -23,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,8 +88,8 @@ class ReservationServiceTest {
     @Test
     void reserve_Success() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(testEvent));
-        when(reservationRepository.findByEventId(1L)).thenReturn(Collections.emptyList());
+        when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testEvent));
+        when(reservationRepository.countByEventIdAndStatus(1L, ReservationStatus.CONFIRMED)).thenReturn(0L);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(testReservation);
 
         ReservationResponse response = reservationService.reserve(1L, reservationRequest);
@@ -106,8 +105,8 @@ class ReservationServiceTest {
         testEvent.setCapacity(1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(testEvent));
-        when(reservationRepository.findByEventId(1L)).thenReturn(List.of(testReservation));
+        when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testEvent));
+        when(reservationRepository.countByEventIdAndStatus(1L, ReservationStatus.CONFIRMED)).thenReturn(1L);
 
         assertThrows(EventFullException.class,
                 () -> reservationService.reserve(1L, reservationRequest));

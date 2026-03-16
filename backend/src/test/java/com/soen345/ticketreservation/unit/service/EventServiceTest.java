@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +53,6 @@ class EventServiceTest {
     @Test
     void getAllEvents_ReturnsList() {
         when(eventRepository.findAll()).thenReturn(List.of(testEvent));
-        when(reservationRepository.findByEventId(1L)).thenReturn(Collections.emptyList());
 
         List<EventResponse> events = eventService.getAllEvents();
 
@@ -65,7 +63,6 @@ class EventServiceTest {
     @Test
     void getEventById_Found() {
         when(eventRepository.findById(1L)).thenReturn(Optional.of(testEvent));
-        when(reservationRepository.findByEventId(1L)).thenReturn(Collections.emptyList());
 
         EventResponse response = eventService.getEventById(1L);
 
