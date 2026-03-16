@@ -20,4 +20,5 @@ public class ReservationResponse {
     private ReservationStatus status;
     private LocalDateTime reservedAt;
     private String confirmationCode;
+    private int numberOfTickets;
 }

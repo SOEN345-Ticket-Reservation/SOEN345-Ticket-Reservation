@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +32,10 @@ public class ReservationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        Event event = eventRepository.findById(request.getEventId())
+        Event event = eventRepository.findByIdWithLock(request.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + request.getEventId()));
 
-        long confirmedCount = reservationRepository.findByEventId(event.getId()).stream()
-                .filter(r -> r.getStatus() == ReservationStatus.CONFIRMED)
-                .count();
+        long confirmedCount = reservationRepository.countByEventIdAndStatus(event.getId(), ReservationStatus.CONFIRMED);
 
         if (confirmedCount + request.getNumberOfTickets() > event.getCapacity()) {
             throw new EventFullException("Not enough seats available for event: " + event.getTitle());
@@ -50,6 +47,7 @@ public class ReservationService {
                 .status(ReservationStatus.CONFIRMED)
                 .reservedAt(LocalDateTime.now())
                 .confirmationCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .numberOfTickets(request.getNumberOfTickets())
                 .build();
 
         Reservation saved = reservationRepository.save(reservation);
@@ -69,7 +67,7 @@ public class ReservationService {
     public List<ReservationResponse> getUserReservations(Long userId) {
         return reservationRepository.findByUserId(userId).stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public ReservationResponse getReservationById(Long id) {
@@ -88,6 +86,7 @@ public class ReservationService {
                 .status(reservation.getStatus())
                 .reservedAt(reservation.getReservedAt())
                 .confirmationCode(reservation.getConfirmationCode())
+                .numberOfTickets(reservation.getNumberOfTickets())
                 .build();
     }
 }

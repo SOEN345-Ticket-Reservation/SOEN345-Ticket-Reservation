@@ -42,4 +42,8 @@ public class Reservation {
 
     @Column(nullable = false, unique = true)
     private String confirmationCode;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int numberOfTickets = 1;
 }

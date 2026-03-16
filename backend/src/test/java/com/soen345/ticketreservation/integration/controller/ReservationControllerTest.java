@@ -78,7 +78,7 @@ class ReservationControllerTest {
 
         when(reservationService.cancel(1L)).thenReturn(response);
 
-        mockMvc.perform(delete("/api/reservations/1"))
+        mockMvc.perform(patch("/api/reservations/1/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }

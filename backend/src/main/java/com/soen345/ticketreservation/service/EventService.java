@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +23,7 @@ public class EventService {
     public List<EventResponse> getAllEvents() {
         return eventRepository.findAll().stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public EventResponse getEventById(Long id) {
@@ -36,36 +35,33 @@ public class EventService {
     public List<EventResponse> getEventsByCategory(EventCategory category) {
         return eventRepository.findByCategory(category).stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<EventResponse> getEventsByLocation(String location) {
         return eventRepository.findByLocation(location).stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<EventResponse> getEventsByDateRange(LocalDateTime start, LocalDateTime end) {
         return eventRepository.findByDateBetween(start, end).stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public int getAvailableSeats(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
-        long reservedCount = reservationRepository.findByEventId(eventId).stream()
-                .filter(r -> r.getStatus() == ReservationStatus.CONFIRMED)
-                .count();
+        long reservedCount = reservationRepository.countByEventIdAndStatus(eventId, ReservationStatus.CONFIRMED);
 
         return event.getCapacity() - (int) reservedCount;
     }
 
     private EventResponse mapToResponse(Event event) {
-        int availableSeats = event.getCapacity() - (int) reservationRepository.findByEventId(event.getId()).stream()
-                .filter(r -> r.getStatus() == ReservationStatus.CONFIRMED)
-                .count();
+        int availableSeats = event.getCapacity()
+                - (int) reservationRepository.countByEventIdAndStatus(event.getId(), ReservationStatus.CONFIRMED);
 
         return EventResponse.builder()
                 .id(event.getId())

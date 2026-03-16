@@ -129,7 +129,7 @@ class TicketBookingAcceptanceTest {
         Long reservationId = objectMapper.readTree(responseJson).get("id").asLong();
 
         // Step 2: Cancel the reservation
-        mockMvc.perform(delete("/api/reservations/" + reservationId))
+        mockMvc.perform(patch("/api/reservations/" + reservationId + "/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }

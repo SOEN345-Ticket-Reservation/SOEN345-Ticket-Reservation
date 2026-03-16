@@ -26,7 +26,7 @@ public class ReservationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}/cancel")
     public ResponseEntity<ReservationResponse> cancelReservation(@PathVariable Long id) {
         ReservationResponse response = reservationService.cancel(id);
         return ResponseEntity.ok(response);
