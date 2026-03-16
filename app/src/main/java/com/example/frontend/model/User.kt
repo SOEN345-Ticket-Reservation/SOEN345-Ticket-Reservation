@@ -17,5 +17,6 @@ data class UserResponse(
     val name: String,
     val email: String,
     val phone: String?,
-    val role: String
+    val role: String,
+    val token: String? = null
 )

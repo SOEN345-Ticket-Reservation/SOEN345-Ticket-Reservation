@@ -66,4 +66,7 @@ dependencies {
 
     // ViewModel
     implementation libs.androidx.lifecycle.viewmodel.compose
+
+    // Secure storage
+    implementation libs.androidx.security.crypto
 }
