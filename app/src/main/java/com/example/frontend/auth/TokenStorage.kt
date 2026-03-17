@@ -8,6 +8,7 @@ object TokenStorage {
 
     private const val PREFS_NAME = "auth_prefs"
     private const val KEY_TOKEN = "token"
+    private const val KEY_USER_ID = "user_id"
 
     private var prefs: android.content.SharedPreferences? = null
 
@@ -32,6 +33,15 @@ object TokenStorage {
     }
 
     fun clearToken() {
-        prefs?.edit()?.remove(KEY_TOKEN)?.apply()
+        prefs?.edit()?.remove(KEY_TOKEN)?.remove(KEY_USER_ID)?.apply()
+    }
+
+    fun getUserId(): Long? {
+        val raw = prefs?.getString(KEY_USER_ID, null) ?: return null
+        return raw.toLongOrNull()
+    }
+
+    fun setUserId(id: Long) {
+        prefs?.edit()?.putString(KEY_USER_ID, id.toString())?.apply()
     }
 }

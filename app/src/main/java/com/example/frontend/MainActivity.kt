@@ -5,8 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.example.frontend.auth.ReservationNotificationPrefs
 import com.example.frontend.auth.TokenStorage
 import com.example.frontend.model.UserResponse
 import com.example.frontend.ui.auth.LoginScreen
@@ -16,28 +20,12 @@ import com.example.frontend.ui.dashboard.SessionUiState
 import com.example.frontend.ui.dashboard.onAuthSuccess
 import com.example.frontend.ui.dashboard.onSignOut
 import com.example.frontend.ui.theme.FrontendTheme
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         TokenStorage.init(applicationContext)
+        ReservationNotificationPrefs.init(applicationContext)
         enableEdgeToEdge()
         setContent {
             FrontendTheme {
@@ -72,6 +60,7 @@ private fun RootContent() {
         AuthFlow(
             onLoginSuccess = { response: UserResponse ->
                 response.token?.let { TokenStorage.setToken(it) }
+                TokenStorage.setUserId(response.id)
                 sessionState.value = onAuthSuccess(response)
             }
         )
@@ -81,6 +70,7 @@ private fun RootContent() {
 @Composable
 private fun AuthFlow(onLoginSuccess: (UserResponse) -> Unit) {
     var showRegister by rememberSaveable { mutableStateOf(false) }
+
     if (showRegister) {
         RegisterScreen(
             onRegisterSuccess = onLoginSuccess,
