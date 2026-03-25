@@ -3,6 +3,9 @@ package com.soen345.ticketreservation.integration.controller;
 import tools.jackson.databind.ObjectMapper;
 import com.soen345.ticketreservation.dto.request.ReservationRequest;
 import com.soen345.ticketreservation.dto.response.ReservationResponse;
+import com.soen345.ticketreservation.exception.CancellationNotificationException;
+import com.soen345.ticketreservation.exception.EmailConfirmationException;
+import com.soen345.ticketreservation.exception.EventFullException;
 import com.soen345.ticketreservation.model.enums.ReservationStatus;
 import com.soen345.ticketreservation.service.NotificationService;
 import com.soen345.ticketreservation.service.ReservationService;
@@ -88,6 +91,54 @@ class ReservationControllerTest {
         }
 
         @Test
+        void createReservation_EmailConfirmationFailure_ReturnsServiceUnavailable() throws Exception {
+                ReservationRequest request = ReservationRequest.builder()
+                                .eventId(1L)
+                                .numberOfTickets(1)
+                                .build();
+
+                when(reservationService.reserve(eq(1L), any(ReservationRequest.class)))
+                                .thenThrow(new EmailConfirmationException("Email confirmation failed",
+                                                new RuntimeException("SMTP error")));
+
+                mockMvc.perform(post("/api/reservations")
+                                .param("userId", "1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isServiceUnavailable())
+                                .andExpect(jsonPath("$.message").value("Email confirmation failed"));
+        }
+
+        @Test
+        void createReservation_EventFullFailure_ReturnsConflict() throws Exception {
+                ReservationRequest request = ReservationRequest.builder()
+                                .eventId(1L)
+                                .numberOfTickets(1)
+                                .build();
+
+                when(reservationService.reserve(eq(1L), any(ReservationRequest.class)))
+                                .thenThrow(new EventFullException("Event is full"));
+
+                mockMvc.perform(post("/api/reservations")
+                                .param("userId", "1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isConflict())
+                                .andExpect(jsonPath("$.message").value("Event is full"));
+        }
+
+        @Test
+        void cancelReservation_CancellationNotificationFailure_ReturnsServiceUnavailable() throws Exception {
+                when(reservationService.cancel(1L))
+                                .thenThrow(new CancellationNotificationException("Cancellation notification failed",
+                                                new RuntimeException("SMTP error")));
+
+                mockMvc.perform(patch("/api/reservations/1/cancel"))
+                                .andExpect(status().isServiceUnavailable())
+                                .andExpect(jsonPath("$.message").value("Cancellation notification failed"));
+        }
+
+        @Test
         void getUserReservations_Success() throws Exception {
                 ReservationResponse response = ReservationResponse.builder()
                                 .id(1L)
@@ -124,5 +175,25 @@ class ReservationControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.eventTitle").value("Summer Concert"));
 
+        }
+
+        @Test
+        void getReservation_IllegalArgumentFailure_ReturnsBadRequest() throws Exception {
+                when(reservationService.getReservationById(1L))
+                                .thenThrow(new IllegalArgumentException("Invalid reservation id"));
+
+                mockMvc.perform(get("/api/reservations/1"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Invalid reservation id"));
+        }
+
+        @Test
+        void getReservation_UnexpectedFailure_ReturnsInternalServerError() throws Exception {
+                when(reservationService.getReservationById(1L))
+                                .thenThrow(new RuntimeException("Unexpected runtime error"));
+
+                mockMvc.perform(get("/api/reservations/1"))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
         }
 }
