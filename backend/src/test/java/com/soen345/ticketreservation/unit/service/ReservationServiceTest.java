@@ -148,4 +148,19 @@ class ReservationServiceTest {
         assertEquals(1, reservations.size());
         assertEquals("Summer Concert", reservations.get(0).getEventTitle());
     }
+
+    @Test
+    void getReservationById_Success() {
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(testReservation));
+        ReservationResponse response = reservationService.getReservationById(1L);
+        assertNotNull(response);
+        assertEquals("ABC12345", response.getConfirmationCode());
+    }
+
+    @Test
+    void getReservationById_NotFound_ThrowsException() {
+        when(reservationRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class,
+                () -> reservationService.getReservationById(99L));
+    }
 }

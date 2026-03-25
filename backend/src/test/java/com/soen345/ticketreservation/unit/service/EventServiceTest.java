@@ -121,4 +121,11 @@ class EventServiceTest {
 
         assertEquals(400, availableSeats);
     }
+
+    @Test
+    void getAvailableSeats_EventNotFound_ThrowsException() {
+        when(eventRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class,
+                () -> eventService.getAvailableSeats(99L));
+    }
 }

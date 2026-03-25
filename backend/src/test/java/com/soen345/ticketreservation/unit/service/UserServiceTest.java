@@ -124,7 +124,6 @@ class UserServiceTest {
         assertNull(response.getPhone());
     }
 
-
     @Test
     void authenticate_Success() {
         when(userRepository.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
@@ -160,5 +159,12 @@ class UserServiceTest {
         UserResponse response = userService.getUserById(1L);
         assertNotNull(response);
         assertEquals("John Doe", response.getName());
+    }
+
+    @Test
+    void getUserById_UserNotFound_ThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.getUserById(1L));
     }
 }
