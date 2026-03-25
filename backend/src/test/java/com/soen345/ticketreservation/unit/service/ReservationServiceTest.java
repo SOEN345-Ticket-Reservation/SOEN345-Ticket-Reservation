@@ -13,6 +13,7 @@ import com.soen345.ticketreservation.model.enums.UserRole;
 import com.soen345.ticketreservation.repository.EventRepository;
 import com.soen345.ticketreservation.repository.ReservationRepository;
 import com.soen345.ticketreservation.repository.UserRepository;
+import com.soen345.ticketreservation.service.NotificationService;
 import com.soen345.ticketreservation.service.ReservationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class ReservationServiceTest {
 
     @InjectMocks
     private ReservationService reservationService;
+
+    @Mock
+    private NotificationService notificationService;
 
     private User testUser;
     private Event testEvent;
@@ -118,6 +122,14 @@ class ReservationServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> reservationService.reserve(99L, reservationRequest));
+    }
+
+    @Test
+    void reserve_EventNotFound_ThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class,
+                () -> reservationService.reserve(1L, reservationRequest));
     }
 
     @Test

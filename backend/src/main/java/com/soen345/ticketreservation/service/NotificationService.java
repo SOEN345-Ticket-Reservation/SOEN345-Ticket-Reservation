@@ -1,7 +1,14 @@
 package com.soen345.ticketreservation.service;
 
+import com.soen345.ticketreservation.exception.CancellationNotificationException;
+import com.soen345.ticketreservation.exception.EmailConfirmationException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -9,34 +16,36 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class NotificationService {
 
-    /**
-     * Send email confirmation for a reservation.
-     * In a real application, this would integrate with an email service (e.g.,
-     * SendGrid, SES).
-     */
-    public void sendEmailConfirmation(String email, String confirmationCode, String eventTitle) {
-        log.info("Sending email confirmation to {} for event '{}' with code: {}",
-                email, eventTitle, confirmationCode);
-        // TODO: Integrate with actual email service
+    private final JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    public void sendEmailConfirmation(String to, String confirmationCode, String eventTitle) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(to);
+            message.setSubject("Reservation Confirmed: " + eventTitle);
+            message.setText("Your reservation for " + eventTitle
+                    + " is confirmed.\nConfirmation code: " + confirmationCode);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailConfirmationException("Failed to send confirmation email to " + to, e);
+        }
     }
 
-    /**
-     * Send SMS confirmation for a reservation.
-     * In a real application, this would integrate with an SMS service (e.g.,
-     * Twilio).
-     */
-    public void sendSmsConfirmation(String phone, String confirmationCode, String eventTitle) {
-        log.info("Sending SMS confirmation to {} for event '{}' with code: {}",
-                phone, eventTitle, confirmationCode);
-        // TODO: Integrate with actual SMS service
-    }
-
-    /**
-     * Send cancellation notification.
-     */
-    public void sendCancellationNotification(String email, String confirmationCode, String eventTitle) {
-        log.info("Sending cancellation notification to {} for event '{}' with code: {}",
-                email, eventTitle, confirmationCode);
-        // TODO: Integrate with actual email service
+    public void sendCancellationNotification(String to, String confirmationCode, String eventTitle) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(to);
+            message.setSubject("Reservation Cancelled: " + eventTitle);
+            message.setText("Your reservation for " + eventTitle
+                    + " (code: " + confirmationCode + ") has been cancelled.");
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new CancellationNotificationException("Failed to send cancellation email to " + to, e);
+        }
     }
 }

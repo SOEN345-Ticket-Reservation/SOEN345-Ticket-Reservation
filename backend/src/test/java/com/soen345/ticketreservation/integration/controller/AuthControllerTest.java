@@ -5,6 +5,7 @@ import com.soen345.ticketreservation.dto.request.LoginRequest;
 import com.soen345.ticketreservation.dto.request.RegisterRequest;
 import com.soen345.ticketreservation.dto.response.UserResponse;
 import com.soen345.ticketreservation.model.enums.UserRole;
+import com.soen345.ticketreservation.service.NotificationService;
 import com.soen345.ticketreservation.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,75 +25,77 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuthControllerTest {
+        @MockitoBean
+        private NotificationService notificationService;
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private UserService userService;
+        @MockitoBean
+        private UserService userService;
 
-    @Test
-    void register_Success() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
-                .name("John Doe")
-                .email("john@example.com")
-                .password("password123")
-                .build();
+        @Test
+        void register_Success() throws Exception {
+                RegisterRequest request = RegisterRequest.builder()
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .password("password123")
+                                .build();
 
-        UserResponse response = UserResponse.builder()
-                .id(1L)
-                .name("John Doe")
-                .email("john@example.com")
-                .role(UserRole.CUSTOMER)
-                .build();
+                UserResponse response = UserResponse.builder()
+                                .id(1L)
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .role(UserRole.CUSTOMER)
+                                .build();
 
-        when(userService.register(any(RegisterRequest.class))).thenReturn(response);
+                when(userService.register(any(RegisterRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("John Doe"))
-                .andExpect(jsonPath("$.email").value("john@example.com"));
-    }
+                mockMvc.perform(post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.name").value("John Doe"))
+                                .andExpect(jsonPath("$.email").value("john@example.com"));
+        }
 
-    @Test
-    void register_InvalidEmail_BadRequest() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
-                .name("John Doe")
-                .email("invalid-email")
-                .password("password123")
-                .build();
+        @Test
+        void register_InvalidEmail_BadRequest() throws Exception {
+                RegisterRequest request = RegisterRequest.builder()
+                                .name("John Doe")
+                                .email("invalid-email")
+                                .password("password123")
+                                .build();
 
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest());
+        }
 
-    @Test
-    void login_Success() throws Exception {
-        LoginRequest request = LoginRequest.builder()
-                .emailOrPhone("john@example.com")
-                .password("password123")
-                .build();
+        @Test
+        void login_Success() throws Exception {
+                LoginRequest request = LoginRequest.builder()
+                                .emailOrPhone("john@example.com")
+                                .password("password123")
+                                .build();
 
-        UserResponse response = UserResponse.builder()
-                .id(1L)
-                .name("John Doe")
-                .email("john@example.com")
-                .role(UserRole.CUSTOMER)
-                .build();
+                UserResponse response = UserResponse.builder()
+                                .id(1L)
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .role(UserRole.CUSTOMER)
+                                .build();
 
-        when(userService.authenticate(any(LoginRequest.class))).thenReturn(response);
+                when(userService.authenticate(any(LoginRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("john@example.com"));
-    }
+                mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.email").value("john@example.com"));
+        }
 }

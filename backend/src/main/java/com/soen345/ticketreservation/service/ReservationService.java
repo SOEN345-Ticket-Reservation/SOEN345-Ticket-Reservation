@@ -23,70 +23,81 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private final ReservationRepository reservationRepository;
-    private final EventRepository eventRepository;
-    private final UserRepository userRepository;
+        private final ReservationRepository reservationRepository;
+        private final EventRepository eventRepository;
+        private final UserRepository userRepository;
+        private final NotificationService notificationService;
 
-    @Transactional
-    public ReservationResponse reserve(Long userId, ReservationRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        @Transactional
+        public ReservationResponse reserve(Long userId, ReservationRequest request) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        Event event = eventRepository.findByIdWithLock(request.getEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + request.getEventId()));
+                Event event = eventRepository.findByIdWithLock(request.getEventId())
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Event not found with id: " + request.getEventId()));
 
-        long confirmedCount = reservationRepository.countByEventIdAndStatus(event.getId(), ReservationStatus.CONFIRMED);
+                long confirmedCount = reservationRepository.countByEventIdAndStatus(event.getId(),
+                                ReservationStatus.CONFIRMED);
 
-        if (confirmedCount + request.getNumberOfTickets() > event.getCapacity()) {
-            throw new EventFullException("Not enough seats available for event: " + event.getTitle());
+                if (confirmedCount + request.getNumberOfTickets() > event.getCapacity()) {
+                        throw new EventFullException("Not enough seats available for event: " + event.getTitle());
+                }
+
+                Reservation reservation = Reservation.builder()
+                                .user(user)
+                                .event(event)
+                                .status(ReservationStatus.CONFIRMED)
+                                .reservedAt(LocalDateTime.now())
+                                .confirmationCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                                .numberOfTickets(request.getNumberOfTickets())
+                                .build();
+
+                Reservation saved = reservationRepository.save(reservation);
+                notificationService.sendEmailConfirmation(
+                                user.getEmail(), saved.getConfirmationCode(), event.getTitle());
+                return mapToResponse(saved);
         }
 
-        Reservation reservation = Reservation.builder()
-                .user(user)
-                .event(event)
-                .status(ReservationStatus.CONFIRMED)
-                .reservedAt(LocalDateTime.now())
-                .confirmationCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .numberOfTickets(request.getNumberOfTickets())
-                .build();
+        @Transactional
+        public ReservationResponse cancel(Long reservationId) {
+                Reservation reservation = reservationRepository.findById(reservationId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Reservation not found with id: " + reservationId));
 
-        Reservation saved = reservationRepository.save(reservation);
-        return mapToResponse(saved);
-    }
+                reservation.setStatus(ReservationStatus.CANCELLED);
+                Reservation updated = reservationRepository.save(reservation);
+                notificationService.sendCancellationNotification(
+                                reservation.getUser().getEmail(),
+                                reservation.getConfirmationCode(),
+                                reservation.getEvent().getTitle());
+                return mapToResponse(updated);
+        }
 
-    @Transactional
-    public ReservationResponse cancel(Long reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with id: " + reservationId));
+        public List<ReservationResponse> getUserReservations(Long userId) {
+                return reservationRepository.findByUserId(userId).stream()
+                                .map(this::mapToResponse)
+                                .toList();
+        }
 
-        reservation.setStatus(ReservationStatus.CANCELLED);
-        Reservation updated = reservationRepository.save(reservation);
-        return mapToResponse(updated);
-    }
+        public ReservationResponse getReservationById(Long id) {
+                Reservation reservation = reservationRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Reservation not found with id: " + id));
+                return mapToResponse(reservation);
+        }
 
-    public List<ReservationResponse> getUserReservations(Long userId) {
-        return reservationRepository.findByUserId(userId).stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    public ReservationResponse getReservationById(Long id) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with id: " + id));
-        return mapToResponse(reservation);
-    }
-
-    private ReservationResponse mapToResponse(Reservation reservation) {
-        return ReservationResponse.builder()
-                .id(reservation.getId())
-                .userId(reservation.getUser().getId())
-                .userName(reservation.getUser().getName())
-                .eventId(reservation.getEvent().getId())
-                .eventTitle(reservation.getEvent().getTitle())
-                .status(reservation.getStatus())
-                .reservedAt(reservation.getReservedAt())
-                .confirmationCode(reservation.getConfirmationCode())
-                .numberOfTickets(reservation.getNumberOfTickets())
-                .build();
-    }
+        private ReservationResponse mapToResponse(Reservation reservation) {
+                return ReservationResponse.builder()
+                                .id(reservation.getId())
+                                .userId(reservation.getUser().getId())
+                                .userName(reservation.getUser().getName())
+                                .eventId(reservation.getEvent().getId())
+                                .eventTitle(reservation.getEvent().getTitle())
+                                .status(reservation.getStatus())
+                                .reservedAt(reservation.getReservedAt())
+                                .confirmationCode(reservation.getConfirmationCode())
+                                .numberOfTickets(reservation.getNumberOfTickets())
+                                .build();
+        }
 }

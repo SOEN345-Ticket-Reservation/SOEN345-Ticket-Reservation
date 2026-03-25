@@ -4,6 +4,7 @@ import tools.jackson.databind.ObjectMapper;
 import com.soen345.ticketreservation.dto.request.ReservationRequest;
 import com.soen345.ticketreservation.dto.response.ReservationResponse;
 import com.soen345.ticketreservation.model.enums.ReservationStatus;
+import com.soen345.ticketreservation.service.NotificationService;
 import com.soen345.ticketreservation.service.ReservationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @WithMockUser
 class ReservationControllerTest {
+
+        @MockitoBean
+        private NotificationService notificationService;
 
         @Autowired
         private MockMvc mockMvc;

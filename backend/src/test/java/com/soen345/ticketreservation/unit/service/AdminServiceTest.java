@@ -4,7 +4,9 @@ import com.soen345.ticketreservation.dto.request.CreateEventRequest;
 import com.soen345.ticketreservation.dto.response.EventResponse;
 import com.soen345.ticketreservation.exception.ResourceNotFoundException;
 import com.soen345.ticketreservation.model.Event;
+import com.soen345.ticketreservation.model.Reservation;
 import com.soen345.ticketreservation.model.enums.EventCategory;
+import com.soen345.ticketreservation.model.enums.ReservationStatus;
 import com.soen345.ticketreservation.repository.EventRepository;
 import com.soen345.ticketreservation.repository.ReservationRepository;
 import com.soen345.ticketreservation.service.AdminService;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -73,6 +76,25 @@ class AdminServiceTest {
         assertNotNull(response);
         assertEquals("Summer Concert", response.getTitle());
         verify(eventRepository).save(any(Event.class));
+    }
+
+    @Test
+    void createEvent_CountsOnlyConfirmedReservationsForAvailableSeats() {
+        Reservation confirmedReservation = Reservation.builder()
+                .status(ReservationStatus.CONFIRMED)
+                .build();
+        Reservation cancelledReservation = Reservation.builder()
+                .status(ReservationStatus.CANCELLED)
+                .build();
+
+        when(eventRepository.save(any(Event.class))).thenReturn(testEvent);
+        when(reservationRepository.findByEventId(1L))
+                .thenReturn(List.of(confirmedReservation, cancelledReservation));
+
+        EventResponse response = adminService.createEvent(createEventRequest);
+
+        assertNotNull(response);
+        assertEquals(499, response.getAvailableSeats());
     }
 
     @Test

@@ -3,6 +3,8 @@ package com.soen345.ticketreservation.integration.controller;
 import com.soen345.ticketreservation.dto.response.EventResponse;
 import com.soen345.ticketreservation.model.enums.EventCategory;
 import com.soen345.ticketreservation.service.EventService;
+import com.soen345.ticketreservation.service.NotificationService;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -23,6 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class EventControllerTest {
+        @MockitoBean
+        private NotificationService notificationService;
 
         @Autowired
         private MockMvc mockMvc;
