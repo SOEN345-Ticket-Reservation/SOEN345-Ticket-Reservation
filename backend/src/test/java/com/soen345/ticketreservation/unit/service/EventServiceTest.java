@@ -4,6 +4,7 @@ import com.soen345.ticketreservation.dto.response.EventResponse;
 import com.soen345.ticketreservation.exception.ResourceNotFoundException;
 import com.soen345.ticketreservation.model.Event;
 import com.soen345.ticketreservation.model.enums.EventCategory;
+import com.soen345.ticketreservation.model.enums.ReservationStatus;
 import com.soen345.ticketreservation.repository.EventRepository;
 import com.soen345.ticketreservation.repository.ReservationRepository;
 import com.soen345.ticketreservation.service.EventService;
@@ -77,5 +78,47 @@ class EventServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> eventService.getEventById(99L));
+    }
+
+    @Test
+    void getEventsByCategory_ReturnsList() {
+        when(eventRepository.findByCategory(EventCategory.CONCERT)).thenReturn(List.of(testEvent));
+
+        List<EventResponse> events = eventService.getEventsByCategory(EventCategory.CONCERT);
+
+        assertEquals(1, events.size());
+        assertEquals("Summer Concert", events.get(0).getTitle());
+    }
+
+    @Test
+    void getEventsByLocation_ReturnsList() {
+        when(eventRepository.findByLocation("Montreal")).thenReturn(List.of(testEvent));
+
+        List<EventResponse> events = eventService.getEventsByLocation("Montreal");
+
+        assertEquals(1, events.size());
+        assertEquals("Summer Concert", events.get(0).getTitle());
+    }
+
+    @Test
+    void getEventsByDateRange_ReturnsList() {
+        LocalDateTime start = LocalDateTime.of(2026, 6, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2026, 6, 30, 23, 59);
+        when(eventRepository.findByDateBetween(start, end)).thenReturn(List.of(testEvent));
+
+        List<EventResponse> events = eventService.getEventsByDateRange(start, end);
+
+        assertEquals(1, events.size());
+        assertEquals("Summer Concert", events.get(0).getTitle());
+    }
+
+    @Test
+    void getAvailableSeats_ReturnsCorrectCount() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(testEvent));
+        when(reservationRepository.countByEventIdAndStatus(1L, ReservationStatus.CONFIRMED)).thenReturn(100L);
+
+        int availableSeats = eventService.getAvailableSeats(1L);
+
+        assertEquals(400, availableSeats);
     }
 }

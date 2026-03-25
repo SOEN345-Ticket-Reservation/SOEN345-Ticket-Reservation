@@ -24,65 +24,100 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class EventControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockitoBean
-    private EventService eventService;
+        @MockitoBean
+        private EventService eventService;
 
-    @Test
-    void getAllEvents_Success() throws Exception {
-        EventResponse event = EventResponse.builder()
-                .id(1L)
-                .title("Summer Concert")
-                .date(LocalDateTime.of(2026, 6, 15, 20, 0))
-                .location("Montreal")
-                .category(EventCategory.CONCERT)
-                .capacity(500)
-                .price(new BigDecimal("49.99"))
-                .availableSeats(500)
-                .build();
+        @Test
+        void getAllEvents_Success() throws Exception {
+                EventResponse event = EventResponse.builder()
+                                .id(1L)
+                                .title("Summer Concert")
+                                .date(LocalDateTime.of(2026, 6, 15, 20, 0))
+                                .location("Montreal")
+                                .category(EventCategory.CONCERT)
+                                .capacity(500)
+                                .price(new BigDecimal("49.99"))
+                                .availableSeats(500)
+                                .build();
 
-        when(eventService.getAllEvents()).thenReturn(List.of(event));
+                when(eventService.getAllEvents()).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/api/events"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Summer Concert"))
-                .andExpect(jsonPath("$[0].location").value("Montreal"));
-    }
+                mockMvc.perform(get("/api/events"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].title").value("Summer Concert"))
+                                .andExpect(jsonPath("$[0].location").value("Montreal"));
+        }
 
-    @Test
-    void getEventById_Success() throws Exception {
-        EventResponse event = EventResponse.builder()
-                .id(1L)
-                .title("Summer Concert")
-                .date(LocalDateTime.of(2026, 6, 15, 20, 0))
-                .location("Montreal")
-                .category(EventCategory.CONCERT)
-                .capacity(500)
-                .price(new BigDecimal("49.99"))
-                .availableSeats(500)
-                .build();
+        @Test
+        void getEventById_Success() throws Exception {
+                EventResponse event = EventResponse.builder()
+                                .id(1L)
+                                .title("Summer Concert")
+                                .date(LocalDateTime.of(2026, 6, 15, 20, 0))
+                                .location("Montreal")
+                                .category(EventCategory.CONCERT)
+                                .capacity(500)
+                                .price(new BigDecimal("49.99"))
+                                .availableSeats(500)
+                                .build();
 
-        when(eventService.getEventById(1L)).thenReturn(event);
+                when(eventService.getEventById(1L)).thenReturn(event);
 
-        mockMvc.perform(get("/api/events/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Summer Concert"));
-    }
+                mockMvc.perform(get("/api/events/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.title").value("Summer Concert"));
+        }
 
-    @Test
-    void getEventsByCategory_Success() throws Exception {
-        EventResponse event = EventResponse.builder()
-                .id(1L)
-                .title("Summer Concert")
-                .category(EventCategory.CONCERT)
-                .build();
+        @Test
+        void getEventsByCategory_Success() throws Exception {
+                EventResponse event = EventResponse.builder()
+                                .id(1L)
+                                .title("Summer Concert")
+                                .category(EventCategory.CONCERT)
+                                .build();
 
-        when(eventService.getEventsByCategory(EventCategory.CONCERT)).thenReturn(List.of(event));
+                when(eventService.getEventsByCategory(EventCategory.CONCERT)).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/api/events/category/CONCERT"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].category").value("CONCERT"));
-    }
+                mockMvc.perform(get("/api/events/category/CONCERT"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].category").value("CONCERT"));
+        }
+
+        @Test
+        void getEventsByLocation_Success() throws Exception {
+                EventResponse event = EventResponse.builder()
+                                .id(1L)
+                                .title("Summer Concert")
+                                .location("Montreal")
+                                .build();
+
+                when(eventService.getEventsByLocation("Montreal")).thenReturn(List.of(event));
+
+                mockMvc.perform(get("/api/events/location/Montreal"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].location").value("Montreal"));
+        }
+
+        @Test
+        void getEventsByDateRange_Success() throws Exception {
+                EventResponse event = EventResponse.builder()
+                                .id(1L)
+                                .title("Summer Concert")
+                                .date(LocalDateTime.of(2026, 6, 15, 20, 0))
+                                .build();
+
+                when(eventService.getEventsByDateRange(
+                                LocalDateTime.of(2026, 6, 1, 0, 0),
+                                LocalDateTime.of(2026, 6, 30, 23, 59)))
+                                .thenReturn(List.of(event));
+
+                mockMvc.perform(get("/api/events/date-range")
+                                .param("start", "2026-06-01T00:00:00")
+                                .param("end", "2026-06-30T23:59:00"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].date").value("2026-06-15T20:00:00"));
+        }
 }

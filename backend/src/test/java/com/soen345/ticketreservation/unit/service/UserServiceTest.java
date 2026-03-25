@@ -89,6 +89,43 @@ class UserServiceTest {
     }
 
     @Test
+    void register_DuplicatePhone_ThrowsException() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByPhone("1234567890")).thenReturn(true);
+        assertThrows(DuplicateRegistrationException.class,
+                () -> userService.register(registerRequest));
+    }
+
+    @Test
+    void register_NullPhone_Success() {
+        RegisterRequest requestWithoutPhone = RegisterRequest.builder()
+                .name("Jane Doe")
+                .email("jane@example.com")
+                .phone(null)
+                .password("password123")
+                .build();
+
+        when(userRepository.existsByEmail("jane@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenReturn(User.builder()
+                .id(2L)
+                .name("Jane Doe")
+                .email("jane@example.com")
+                .phone(null)
+                .password("encoded_password")
+                .role(UserRole.CUSTOMER)
+                .build());
+
+        UserResponse response = userService.register(requestWithoutPhone);
+
+        assertNotNull(response);
+        assertEquals("Jane Doe", response.getName());
+        assertEquals("jane@example.com", response.getEmail());
+        assertNull(response.getPhone());
+    }
+
+
+    @Test
     void authenticate_Success() {
         when(userRepository.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("password123", "encoded_password")).thenReturn(true);
@@ -115,5 +152,13 @@ class UserServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> userService.authenticate(loginRequest));
+    }
+
+    @Test
+    void getUserById_Success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        UserResponse response = userService.getUserById(1L);
+        assertNotNull(response);
+        assertEquals("John Doe", response.getName());
     }
 }

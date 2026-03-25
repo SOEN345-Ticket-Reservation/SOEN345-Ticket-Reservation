@@ -30,75 +30,95 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class ReservationControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private ReservationService reservationService;
+        @MockitoBean
+        private ReservationService reservationService;
 
-    @Test
-    void createReservation_Success() throws Exception {
-        ReservationRequest request = ReservationRequest.builder()
-                .eventId(1L)
-                .numberOfTickets(1)
-                .build();
+        @Test
+        void createReservation_Success() throws Exception {
+                ReservationRequest request = ReservationRequest.builder()
+                                .eventId(1L)
+                                .numberOfTickets(1)
+                                .build();
 
-        ReservationResponse response = ReservationResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .userName("John Doe")
-                .eventId(1L)
-                .eventTitle("Summer Concert")
-                .status(ReservationStatus.CONFIRMED)
-                .reservedAt(LocalDateTime.now())
-                .confirmationCode("ABC12345")
-                .build();
+                ReservationResponse response = ReservationResponse.builder()
+                                .id(1L)
+                                .userId(1L)
+                                .userName("John Doe")
+                                .eventId(1L)
+                                .eventTitle("Summer Concert")
+                                .status(ReservationStatus.CONFIRMED)
+                                .reservedAt(LocalDateTime.now())
+                                .confirmationCode("ABC12345")
+                                .build();
 
-        when(reservationService.reserve(eq(1L), any(ReservationRequest.class))).thenReturn(response);
+                when(reservationService.reserve(eq(1L), any(ReservationRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/reservations")
-                .param("userId", "1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.confirmationCode").value("ABC12345"))
-                .andExpect(jsonPath("$.status").value("CONFIRMED"));
-    }
+                mockMvc.perform(post("/api/reservations")
+                                .param("userId", "1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.confirmationCode").value("ABC12345"))
+                                .andExpect(jsonPath("$.status").value("CONFIRMED"));
+        }
 
-    @Test
-    void cancelReservation_Success() throws Exception {
-        ReservationResponse response = ReservationResponse.builder()
-                .id(1L)
-                .status(ReservationStatus.CANCELLED)
-                .confirmationCode("ABC12345")
-                .build();
+        @Test
+        void cancelReservation_Success() throws Exception {
+                ReservationResponse response = ReservationResponse.builder()
+                                .id(1L)
+                                .status(ReservationStatus.CANCELLED)
+                                .confirmationCode("ABC12345")
+                                .build();
 
-        when(reservationService.cancel(1L)).thenReturn(response);
+                when(reservationService.cancel(1L)).thenReturn(response);
 
-        mockMvc.perform(patch("/api/reservations/1/cancel"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
-    }
+                mockMvc.perform(patch("/api/reservations/1/cancel"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("CANCELLED"));
+        }
 
-    @Test
-    void getUserReservations_Success() throws Exception {
-        ReservationResponse response = ReservationResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .userName("John Doe")
-                .eventId(1L)
-                .eventTitle("Summer Concert")
-                .status(ReservationStatus.CONFIRMED)
-                .confirmationCode("ABC12345")
-                .build();
+        @Test
+        void getUserReservations_Success() throws Exception {
+                ReservationResponse response = ReservationResponse.builder()
+                                .id(1L)
+                                .userId(1L)
+                                .userName("John Doe")
+                                .eventId(1L)
+                                .eventTitle("Summer Concert")
+                                .status(ReservationStatus.CONFIRMED)
+                                .confirmationCode("ABC12345")
+                                .build();
 
-        when(reservationService.getUserReservations(1L)).thenReturn(List.of(response));
+                when(reservationService.getUserReservations(1L)).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/reservations/user/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].eventTitle").value("Summer Concert"));
-    }
+                mockMvc.perform(get("/api/reservations/user/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].eventTitle").value("Summer Concert"));
+        }
+
+        @Test
+        void getReservation_Success() throws Exception {
+                ReservationResponse response = ReservationResponse.builder()
+                                .id(1L)
+                                .userId(1L)
+                                .userName("John Doe")
+                                .eventId(1L)
+                                .eventTitle("Summer Concert")
+                                .status(ReservationStatus.CONFIRMED)
+                                .confirmationCode("ABC12345")
+                                .build();
+
+                when(reservationService.getReservationById(1L)).thenReturn(response);
+
+                mockMvc.perform(get("/api/reservations/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.eventTitle").value("Summer Concert"));
+
+        }
 }
