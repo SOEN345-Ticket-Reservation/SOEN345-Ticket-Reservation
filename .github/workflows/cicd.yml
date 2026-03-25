@@ -8,8 +8,63 @@ on:
   workflow_dispatch:
 
 jobs:
-  backend-build-and-test:
+  # ──────────────────────────────────────────────────
+  # Stage 1: Unit & Component Tests
+  # Tests individual classes/methods in isolation using
+  # mocks (Mockito). No database or Spring context needed.
+  # Covers: model, service, and DTO layer tests.
+  # ──────────────────────────────────────────────────
+  unit-tests:
+    name: "Unit & Component Tests"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x backend/mvnw
+
+      - name: Compile project
+        working-directory: backend
+        run: ./mvnw compile -B
+
+      - name: Run unit tests
+        working-directory: backend
+        run: ./mvnw test -B
+        env:
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: backend/target/surefire-reports/
+          retention-days: 14
+
+  # ──────────────────────────────────────────────────
+  # Stage 2: Integration Tests
+  # Tests components working together with real
+  # infrastructure (PostgreSQL via H2 in-memory,
+  # Spring context, MockMvc for controller layer).
+  # Covers: repository, controller integration tests.
+  # ──────────────────────────────────────────────────
+  integration-tests:
+    name: "Integration Tests"
+    runs-on: ubuntu-latest
+    needs: unit-tests
     permissions:
       contents: read
       pull-requests: write
@@ -43,17 +98,6 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x backend/mvnw
 
-      - name: Build project
-        working-directory: backend
-        run: ./mvnw compile -B
-
-      - name: Run unit tests
-        working-directory: backend
-        run: ./mvnw test -B
-        env:
-          DB_USERNAME: postgres
-          DB_PASSWORD: postgres
-
       - name: Run integration tests
         working-directory: backend
         run: ./mvnw verify -B -DskipUnitTests
@@ -61,19 +105,88 @@ jobs:
           DB_USERNAME: postgres
           DB_PASSWORD: postgres
 
-      - name: Upload test reports
+      - name: Upload integration test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: integration-test-reports
+          path: backend/target/failsafe-reports/
+          retention-days: 14
+
+  # ──────────────────────────────────────────────────
+  # Stage 3: Functional & Acceptance Tests
+  # End-to-end user flows that exercise the full stack
+  # (controller → service → repository → DB) through
+  # HTTP requests. Validates real user scenarios:
+  #   - User registration & login flow
+  #   - Ticket booking & cancellation flow
+  #   - Admin event management flow
+  # ──────────────────────────────────────────────────
+  acceptance-tests:
+    name: "Functional & Acceptance Tests"
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    permissions:
+      contents: read
+      pull-requests: write
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ticket_reservation_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x backend/mvnw
+
+      - name: Run acceptance tests
+        working-directory: backend
+        run: |
+          ./mvnw verify -B -DskipUnitTests \
+            -Dtest="*AcceptanceTest" \
+            -DfailIfNoTests=false
+        env:
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+      - name: Upload acceptance test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-reports
           path: |
             backend/target/surefire-reports/
             backend/target/failsafe-reports/
           retention-days: 14
 
+  # ──────────────────────────────────────────────────
+  # Stage 4: Code Quality
+  # Static analysis and style checks.
+  # ──────────────────────────────────────────────────
   code-quality:
+    name: "Code Quality"
     runs-on: ubuntu-latest
-    needs: backend-build-and-test
+    needs: unit-tests
 
     steps:
       - name: Checkout code
@@ -93,9 +206,15 @@ jobs:
         working-directory: backend
         run: ./mvnw checkstyle:check -B || echo "Checkstyle not configured yet, skipping"
 
+  # ──────────────────────────────────────────────────
+  # Stage 5: Package & Deliver
+  # Builds the final JAR artifact on main branch pushes
+  # only after all tests and quality checks pass.
+  # ──────────────────────────────────────────────────
   package:
+    name: "Package Application"
     runs-on: ubuntu-latest
-    needs: [backend-build-and-test, code-quality]
+    needs: [unit-tests, integration-tests, acceptance-tests, code-quality]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
