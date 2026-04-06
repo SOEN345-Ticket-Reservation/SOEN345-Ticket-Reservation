@@ -18,6 +18,7 @@ class AuthViewModel(
     val password = MutableStateFlow("")
     val name = MutableStateFlow("")
     val phone = MutableStateFlow("")
+    val isAdmin = MutableStateFlow(false)
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -50,7 +51,8 @@ class AuthViewModel(
                     name = name.value.trim(),
                     email = email.value.trim(),
                     phone = phone.value.trim().takeIf { it.isNotEmpty() },
-                    password = password.value
+                    password = password.value,
+                    role = if (isAdmin.value) "ADMIN" else "CUSTOMER"
                 )
             )
                 .onSuccess {
