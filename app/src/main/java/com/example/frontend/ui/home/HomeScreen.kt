@@ -53,6 +53,7 @@ fun HomeScreen(
     val error by viewModel.errorMessage.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
+    val dateSortOrder by viewModel.dateSortOrder.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<EventResponse?>(null) }
@@ -132,6 +133,20 @@ fun HomeScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    FilterChip(
+                        selected = dateSortOrder == DateSortOrder.ASCENDING,
+                        onClick = { viewModel.dateSortOrder.value = DateSortOrder.ASCENDING },
+                        label = { Text("Ascending") }
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = dateSortOrder == DateSortOrder.DESCENDING,
+                        onClick = { viewModel.dateSortOrder.value = DateSortOrder.DESCENDING },
+                        label = { Text("Descending") }
+                    )
+                }
                 item {
                     FilterChip(
                         selected = selectedCategory == null,
