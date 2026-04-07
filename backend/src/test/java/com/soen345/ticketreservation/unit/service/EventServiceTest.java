@@ -91,6 +91,15 @@ class EventServiceTest {
     }
 
     @Test
+    void getEventsByCategory_EmptyResult_ReturnsEmptyList() {
+        when(eventRepository.findByCategory(EventCategory.SPORTS)).thenReturn(List.of());
+
+        List<EventResponse> result = eventService.getEventsByCategory(EventCategory.SPORTS);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     void getEventsByLocation_ReturnsList() {
         when(eventRepository.findByLocation("Montreal")).thenReturn(List.of(testEvent));
 
@@ -98,6 +107,15 @@ class EventServiceTest {
 
         assertEquals(1, events.size());
         assertEquals("Summer Concert", events.get(0).getTitle());
+    }
+
+    @Test
+    void getEventsByLocation_NoMatch_ReturnsEmptyList() {
+        when(eventRepository.findByLocation("Unknown")).thenReturn(List.of());
+
+        List<EventResponse> result = eventService.getEventsByLocation("Unknown");
+
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -110,6 +128,17 @@ class EventServiceTest {
 
         assertEquals(1, events.size());
         assertEquals("Summer Concert", events.get(0).getTitle());
+    }
+
+    @Test
+    void getEventsByDateRange_NoResults_ReturnsEmptyList() {
+        LocalDateTime start = LocalDateTime.of(2020, 1, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2020, 12, 31, 23, 59);
+        when(eventRepository.findByDateBetween(start, end)).thenReturn(List.of());
+
+        List<EventResponse> result = eventService.getEventsByDateRange(start, end);
+
+        assertTrue(result.isEmpty());
     }
 
     @Test

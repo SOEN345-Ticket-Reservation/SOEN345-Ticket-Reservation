@@ -106,6 +106,15 @@ class EventControllerTest {
         }
 
         @Test
+        void getEventsByLocation_EmptyResult_ReturnsEmptyArray() throws Exception {
+                when(eventService.getEventsByLocation("Unknown")).thenReturn(List.of());
+
+                mockMvc.perform(get("/api/events/location/Unknown"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$").isEmpty());
+        }
+
+        @Test
         void getEventsByDateRange_Success() throws Exception {
                 EventResponse event = EventResponse.builder()
                                 .id(1L)
