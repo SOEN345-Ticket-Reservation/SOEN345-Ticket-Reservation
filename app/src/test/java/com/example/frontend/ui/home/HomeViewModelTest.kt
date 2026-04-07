@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -56,6 +57,7 @@ class HomeViewModelTest {
             )
         )
         val viewModel = HomeViewModel(repository)
+        val collectorJob = backgroundScope.launch { viewModel.events.collect { } }
 
         viewModel.loadEvents()
         advanceUntilIdle()
@@ -73,6 +75,8 @@ class HomeViewModelTest {
         viewModel.dateSortOrder.value = DateSortOrder.ASCENDING
         advanceUntilIdle()
         assertEquals(listOf(3L, 1L), viewModel.events.value.map { it.id })
+
+        collectorJob.cancel()
     }
 
     private fun event(id: Long, date: String): EventResponse {

@@ -100,22 +100,12 @@ class AdminViewModelTest {
     }
 
     private fun sampleEventResponse(): EventResponse {
-        return EventResponse(
-            id = 1L,
-            title = "Concert Night",
-            description = "Live music",
-            date = "2026-04-15T20:00:00",
-            location = "Main Hall",
-            category = EventCategory.CONCERT,
-            capacity = 120,
-            price = BigDecimal("49.99"),
-            availableSeats = 60
-        )
+        return defaultEventResponse()
     }
 
     private class FakeAdminRepository(
-        private val createResult: Result<EventResponse> = Result.success(sampleEventResponse()),
-        private val updateResult: Result<EventResponse> = Result.success(sampleEventResponse()),
+        private val createResult: Result<EventResponse> = Result.success(defaultEventResponse()),
+        private val updateResult: Result<EventResponse> = Result.success(defaultEventResponse()),
         private val deleteResult: Result<Unit> = Result.success(Unit)
     ) : AdminRepository() {
 
@@ -140,4 +130,18 @@ class AdminViewModelTest {
             return deleteResult
         }
     }
+}
+
+private fun defaultEventResponse(): EventResponse {
+    return EventResponse(
+        id = 1L,
+        title = "Concert Night",
+        description = "Live music",
+        date = "2026-04-15T20:00:00",
+        location = "Main Hall",
+        category = EventCategory.CONCERT,
+        capacity = 120,
+        price = BigDecimal("49.99"),
+        availableSeats = 60
+    )
 }
