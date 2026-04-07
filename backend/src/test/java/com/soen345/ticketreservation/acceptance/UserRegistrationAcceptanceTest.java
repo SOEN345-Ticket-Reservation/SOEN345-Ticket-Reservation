@@ -5,6 +5,7 @@ import com.soen345.ticketreservation.dto.request.LoginRequest;
 import com.soen345.ticketreservation.dto.request.RegisterRequest;
 import com.soen345.ticketreservation.model.User;
 import com.soen345.ticketreservation.model.enums.UserRole;
+import com.soen345.ticketreservation.repository.ReservationRepository;
 import com.soen345.ticketreservation.repository.UserRepository;
 import com.soen345.ticketreservation.service.NotificationService;
 
@@ -40,10 +41,14 @@ class UserRegistrationAcceptanceTest {
 	private UserRepository userRepository;
 
 	@Autowired
+	private ReservationRepository reservationRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@BeforeEach
 	void setUp() {
+		reservationRepository.deleteAll();
 		userRepository.deleteAll();
 	}
 
