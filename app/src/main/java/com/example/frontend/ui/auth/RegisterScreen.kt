@@ -1,13 +1,16 @@
 package com.example.frontend.ui.auth
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +26,7 @@ fun RegisterScreen(
     val email by viewModel.email.collectAsState()
     val phone by viewModel.phone.collectAsState()
     val password by viewModel.password.collectAsState()
+    val isAdmin by viewModel.isAdmin.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
 
@@ -54,6 +58,14 @@ fun RegisterScreen(
                 isPassword = true
             )
             Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isAdmin,
+                    onCheckedChange = { viewModel.isAdmin.value = it }
+                )
+                Text("Register as Admin")
+            }
+            Spacer(modifier = Modifier.height(4.dp))
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (isLoading) {
                 Spacer(modifier = Modifier.height(12.dp))

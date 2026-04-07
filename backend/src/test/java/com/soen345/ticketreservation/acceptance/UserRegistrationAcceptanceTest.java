@@ -27,81 +27,98 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class UserRegistrationAcceptanceTest {
-        @MockitoBean
-        private NotificationService notificationService;
+	@MockitoBean
+	private NotificationService notificationService;
 
-        @Autowired
-        private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-        @Autowired
-        private UserRepository userRepository;
+	@Autowired
+	private UserRepository userRepository;
 
-        @Autowired
-        private PasswordEncoder passwordEncoder;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
-        @BeforeEach
-        void setUp() {
-                userRepository.deleteAll();
-        }
+	@BeforeEach
+	void setUp() {
+		userRepository.deleteAll();
+	}
 
-        @Test
-        void fullFlow_Register_Login_BrowseEvents() throws Exception {
-                // Step 1: Register a new user
-                RegisterRequest registerRequest = RegisterRequest.builder()
-                                .name("Alice Smith")
-                                .email("alice@example.com")
-                                .phone("5551234567")
-                                .password("password123")
-                                .build();
+	@Test
+	void fullFlow_Register_Login_BrowseEvents() throws Exception {
+		// Step 1: Register a new user
+		RegisterRequest registerRequest = RegisterRequest.builder()
+				.name("Alice Smith")
+				.email("alice@example.com")
+				.phone("5551234567")
+				.password("password123")
+				.build();
 
-                mockMvc.perform(post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(registerRequest)))
-                                .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.name").value("Alice Smith"))
-                                .andExpect(jsonPath("$.email").value("alice@example.com"))
-                                .andExpect(jsonPath("$.role").value("CUSTOMER"));
+		mockMvc.perform(post("/api/auth/register")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(registerRequest)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.name").value("Alice Smith"))
+				.andExpect(jsonPath("$.email").value("alice@example.com"))
+				.andExpect(jsonPath("$.role").value("CUSTOMER"));
 
-                // Step 2: Login with the registered user
-                LoginRequest loginRequest = LoginRequest.builder()
-                                .emailOrPhone("alice@example.com")
-                                .password("password123")
-                                .build();
+		// Step 2: Login with the registered user
+		LoginRequest loginRequest = LoginRequest.builder()
+				.emailOrPhone("alice@example.com")
+				.password("password123")
+				.build();
 
-                mockMvc.perform(post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(loginRequest)))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.email").value("alice@example.com"));
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(loginRequest)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.email").value("alice@example.com"));
 
-                // Step 3: Browse events (public endpoint)
-                mockMvc.perform(get("/api/events"))
-                                .andExpect(status().isOk());
-        }
+		// Step 3: Browse events (public endpoint)
+		mockMvc.perform(get("/api/events"))
+				.andExpect(status().isOk());
+	}
 
-        @Test
-        void register_DuplicateEmail_Fails() throws Exception {
-                // Pre-create a user
-                userRepository.save(User.builder()
-                                .name("Existing User")
-                                .email("existing@example.com")
-                                .password(passwordEncoder.encode("password"))
-                                .role(UserRole.CUSTOMER)
-                                .build());
+	@Test
+	void register_AsAdmin_ReturnsAdminRole() throws Exception {
+		RegisterRequest adminRequest = RegisterRequest.builder()
+				.name("Admin User")
+				.email("admin@example.com")
+				.password("password123")
+				.role("ADMIN")
+				.build();
 
-                // Try registering with same email
-                RegisterRequest request = RegisterRequest.builder()
-                                .name("New User")
-                                .email("existing@example.com")
-                                .password("password123")
-                                .build();
+		mockMvc.perform(post("/api/auth/register")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(adminRequest)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.name").value("Admin User"))
+				.andExpect(jsonPath("$.role").value("ADMIN"));
+	}
 
-                mockMvc.perform(post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isConflict());
-        }
+	@Test
+	void register_DuplicateEmail_Fails() throws Exception {
+		// Pre-create a user
+		userRepository.save(User.builder()
+				.name("Existing User")
+				.email("existing@example.com")
+				.password(passwordEncoder.encode("password"))
+				.role(UserRole.CUSTOMER)
+				.build());
+
+		// Try registering with same email
+		RegisterRequest request = RegisterRequest.builder()
+				.name("New User")
+				.email("existing@example.com")
+				.password("password123")
+				.build();
+
+		mockMvc.perform(post("/api/auth/register")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isConflict());
+	}
 }

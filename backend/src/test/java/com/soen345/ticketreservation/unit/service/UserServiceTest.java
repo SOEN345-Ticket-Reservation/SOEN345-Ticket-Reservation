@@ -56,6 +56,7 @@ class UserServiceTest {
                 .email("john@example.com")
                 .phone("1234567890")
                 .password("password123")
+                .role(null)
                 .build();
 
         loginRequest = LoginRequest.builder()
@@ -78,6 +79,65 @@ class UserServiceTest {
         assertEquals("john@example.com", response.getEmail());
         assertEquals(UserRole.CUSTOMER, response.getRole());
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void register_WithAdminRole_SetsAdminRole() {
+        User adminUser = User.builder()
+                .id(2L)
+                .name("Admin User")
+                .email("admin@example.com")
+                .phone(null)
+                .password("encoded_password")
+                .role(UserRole.ADMIN)
+                .build();
+
+        RegisterRequest adminRequest = RegisterRequest.builder()
+                .name("Admin User")
+                .email("admin@example.com")
+                .password("password123")
+                .role("ADMIN")
+                .build();
+
+        when(userRepository.existsByEmail("admin@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenReturn(adminUser);
+
+        UserResponse response = userService.register(adminRequest);
+
+        assertEquals(UserRole.ADMIN, response.getRole());
+    }
+
+    @Test
+    void register_WithNullRole_DefaultsToCustomer() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByPhone(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        UserResponse response = userService.register(registerRequest);
+
+        assertEquals(UserRole.CUSTOMER, response.getRole());
+    }
+
+    @Test
+    void register_WithCustomerRole_SetsCustomerRole() {
+        RegisterRequest customerRequest = RegisterRequest.builder()
+                .name("John Doe")
+                .email("john@example.com")
+                .phone("1234567890")
+                .password("password123")
+                .role("CUSTOMER")
+                .build();
+
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByPhone(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        UserResponse response = userService.register(customerRequest);
+
+        assertEquals(UserRole.CUSTOMER, response.getRole());
     }
 
     @Test

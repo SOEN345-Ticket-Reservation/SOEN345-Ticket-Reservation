@@ -28,12 +28,16 @@ public class UserService {
             throw new DuplicateRegistrationException("Phone number already registered: " + request.getPhone());
         }
 
+        UserRole role = (request.getRole() != null && request.getRole().equalsIgnoreCase("ADMIN"))
+                ? UserRole.ADMIN
+                : UserRole.CUSTOMER;
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.CUSTOMER)
+                .role(role)
                 .build();
 
         User savedUser = userRepository.save(user);
