@@ -40,7 +40,17 @@ import kotlinx.coroutines.launch
 fun DashboardScreen(
     userName: String,
     userRole: String,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    homeContent: @Composable (onEventClick: (Long) -> Unit, showSnackbar: (String) -> Unit) -> Unit = { onEventClick, showSnackbar ->
+        HomeScreen(
+            userRole = userRole,
+            onEventClick = onEventClick,
+            showSnackbar = showSnackbar
+        )
+    },
+    reservationsContent: @Composable (showSnackbar: (String) -> Unit) -> Unit = { showSnackbar ->
+        ReservationsScreen(showSnackbar = showSnackbar)
+    }
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedEventId by remember { mutableStateOf<Long?>(null) }
@@ -102,14 +112,11 @@ fun DashboardScreen(
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (selectedTab) {
-                    0 -> HomeScreen(
-                        userRole = userRole,
-                        onEventClick = { selectedEventId = it },
-                        showSnackbar = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
+                    0 -> homeContent(
+                        { selectedEventId = it },
+                        { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
                     )
-                    1 -> ReservationsScreen(
-                        showSnackbar = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
-                    )
+                    1 -> reservationsContent { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
                 }
             }
         }
