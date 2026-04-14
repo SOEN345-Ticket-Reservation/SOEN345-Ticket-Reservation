@@ -266,3 +266,115 @@ graph TB
     class USR_E,EVT_E,RSV_E entity
     class PG db
     ```
+
+
+# Running the Project
+ 
+This project has two parts: a **Spring Boot backend** (`backend/`) and an **Android frontend** (`app/`).
+ 
+## Prerequisites
+ 
+- **Java 21** (OpenJDK Temurin recommended)
+- **Docker + Docker Compose** (for PostgreSQL)
+- **Android Studio** (latest stable) with Android SDK (compileSdk 36, minSdk 24)
+- **Maven 3.9+** is bundled via `./mvnw` — no system install required
+ 
+---
+ 
+## 1. Start the database
+ 
+From the repository root:
+ 
+```bash
+docker compose up -d
+```
+ 
+This starts PostgreSQL on `localhost:5432` with:
+- DB: `ticket_reservation_db`
+- User / password: `postgres` / `postgres`
+ 
+To stop it later: `docker compose down` (add `-v` to also wipe the volume).
+ 
+---
+ 
+## 2. Run the backend
+ 
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+ 
+The API will be available at **http://localhost:8080**.
+ 
+Optional environment variables (defaults shown):
+ 
+```bash
+export DB_USERNAME=postgres
+export DB_PASSWORD=postgres
+# For outgoing emails (otherwise notifications will fail at runtime):
+export MAIL_USERNAME=your@gmail.com
+export MAIL_PASSWORD=your-app-password
+```
+ 
+### Running backend tests
+ 
+```bash
+cd backend
+./mvnw test              # unit tests only
+./mvnw verify            # unit + integration + acceptance tests
+```
+ 
+Tests use an in-memory H2 database (no Postgres needed).
+ 
+---
+ 
+## 3. Run the Android app
+ 
+1. Open the repository root in **Android Studio** (it will detect the Gradle project).
+2. Let Gradle sync and download dependencies.
+3. Start an **Android emulator** (API 24+), or connect a physical device.
+4. Click **Run ▶** (or `Shift+F10`) with the `app` configuration selected.
+ 
+The app is pre-configured to talk to the backend at `http://10.0.2.2:8080` (the emulator's alias for your host machine's `localhost`). The backend must be running for login, registration, events, and reservations to work.
+ 
+### Using a physical device
+ 
+Run `adb reverse tcp:8080 tcp:8080` after plugging in the device, so the app's requests to `10.0.2.2:8080` / `127.0.0.1:8080` are forwarded to your host. (Cleartext HTTP to these hosts is already whitelisted in `network_security_config.xml`.)
+ 
+### Running Android tests
+ 
+```bash
+./gradlew test                  # JVM unit tests (ViewModels, helpers)
+./gradlew connectedAndroidTest  # Instrumented Compose UI tests (needs emulator/device)
+```
+ 
+---
+ 
+## Quick smoke test
+ 
+Once the backend is up:
+ 
+```bash
+curl http://localhost:8080/api/events
+# → []  (empty list on a fresh DB)
+```
+ 
+Register a user:
+ 
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Alice","email":"alice@example.com","password":"password123"}'
+```
+ 
+---
+ 
+## Project layout
+ 
+```
+.
+├── backend/          # Spring Boot 4 + JPA + PostgreSQL
+├── app/              # Android (Kotlin + Jetpack Compose)
+├── docker-compose.yml
+└── .github/workflows/cicd.yml   # CI: unit, integration, acceptance, quality, package
+```
