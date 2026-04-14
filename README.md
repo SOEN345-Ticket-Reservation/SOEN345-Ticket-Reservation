@@ -265,8 +265,7 @@ graph TB
     class USR_R,EVT_R,RES_R repo
     class USR_E,EVT_E,RSV_E entity
     class PG db
-    ```
-
+```
 
 # Running the Project
  
